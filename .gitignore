@@ -1,0 +1,27 @@
+# Build outputs and IDE files
+**/bin/
+**/obj/
+.vs/
+
+# Local accounts, orders, and databases
+users.json
+bestillinger.json
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+
+# Local configuration and secrets
+.env
+.env.*
+appsettings*.json
+!appsettings.example.json
+secrets*.json
+*.pfx
+*.p12
+*.pem
+*.key
+
+# Logs
+*.log

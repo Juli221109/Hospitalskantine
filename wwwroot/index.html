@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="da">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f4f2ec">
+    <title>Hospitalskantinen</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main class="page">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="Hospitalskantinen, startside"><span class="brand-icon">H</span> Hospitalskantinen</a>
+        <span class="top-note">Mad og måltider, planlagt sammen</span>
+      </header>
+
+      <section id="login-panel" class="login-layout" hidden>
+        <div class="welcome">
+          <p class="eyebrow">Velkommen</p>
+          <h1>Et godt måltid gør dagen bedre.</h1>
+          <p>Log ind for at vælge måltider til den kommende uge. Patienter spiser gratis. Pårørende betaler kun for deres egne måltider.</p>
+          <div class="meal-chips"><span>Morgenmad</span><span>Frokost</span><span>Aftensmad</span></div>
+        </div>
+        <form id="login-form" class="panel login-card">
+          <p class="eyebrow">Sikker adgang</p>
+          <h2>Log ind</h2>
+          <label for="username">Brugernavn</label>
+          <input id="username" name="username" autocomplete="username" required>
+          <label for="password">Adgangskode</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+          <button class="button primary" type="submit">Log ind <span aria-hidden="true">→</span></button>
+          <p id="login-message" class="message" role="status" aria-live="polite"></p>
+          <p class="hint">Brugere oprettes af administratoren. Kontakt personalet, hvis du mangler adgang.</p>
+        </form>
+      </section>
+
+      <section id="app-panel" hidden>
+        <header class="app-heading">
+          <div><p id="role-label" class="eyebrow"></p><h1 id="page-title"></h1><p id="page-description" class="subhead"></p></div>
+          <div class="account"><span id="account-label"></span><button id="logout-button" class="button secondary" type="button">Log ud</button></div>
+        </header>
+
+        <section id="patient-panel" hidden>
+          <div class="section-heading"><div><h2>Din madplan</h2><p>Vælg hvert måltid for sig. Patientens måltider er gratis.</p></div><span class="badge">Mandag – søndag</span></div>
+          <form id="choices-form">
+            <div class="price-note"><strong>Pårørende betaler:</strong> Morgenmad 25 kr · Frokost 50 kr · Aftensmad 60 kr.</div>
+            <p id="weekly-total" class="weekly-total">Pårørendes betaling for ugen: 0 kr</p>
+            <div id="days-list" class="days-list"></div>
+            <div class="save-row"><p id="choices-message" class="message" role="status" aria-live="polite"></p><button id="save-button" class="button primary" type="submit">Gem mine valg</button></div>
+          </form>
+        </section>
+
+        <section id="canteen-panel" hidden>
+          <div class="section-heading"><div><h2>Køkkenets overblik</h2><p>Antal måltider samt betaling fra pårørende. Patienternes mad er gratis.</p></div><span class="badge live">Ugens bestillinger</span></div>
+          <div id="counts-list" class="days-list"></div>
+          <p id="counts-message" class="message" role="status" aria-live="polite"></p>
+        </section>
+      </section>
+      <footer><span>Hospitalskantinen</span><span>Patienternes måltider er gratis</span></footer>
+    </main>
+  </body>
+</html>

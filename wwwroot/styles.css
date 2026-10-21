@@ -1,0 +1,80 @@
+:root {
+  color-scheme: light;
+  --ink: #243b35;
+  --muted: #718079;
+  --green: #31634e;
+  --cream: #f4f2ec;
+  --paper: #fffefa;
+  --line: #e6e7df;
+  --orange: #d58a52;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--cream); color: var(--ink); font-family: "Segoe UI", sans-serif; }
+.page { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
+.topbar { height: 82px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #dfdfd6; }
+.brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); font-weight: 700; font-size: 17px; }
+.brand-icon { width: 36px; height: 36px; display: grid; place-items: center; background: var(--green); color: white; border-radius: 12px; font-family: Georgia, serif; font-size: 22px; }
+.top-note, .subhead, .section-heading p, .hint { color: var(--muted); }
+.top-note { font-size: 13px; }
+.login-layout { display: grid; grid-template-columns: 1.15fr .85fr; gap: 70px; align-items: center; min-height: 610px; padding: 56px 0; }
+.welcome { padding: 28px 0; }
+.eyebrow { color: var(--orange); font-weight: 700; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; margin: 0 0 15px; }
+h1, h2, p { margin-top: 0; }
+h1, h2 { font-family: Georgia, serif; }
+.welcome h1 { max-width: 550px; font-size: clamp(42px, 6vw, 66px); line-height: 1.07; margin-bottom: 20px; }
+.welcome > p:not(.eyebrow) { max-width: 480px; color: var(--muted); font-size: 17px; line-height: 1.7; }
+.meal-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 32px; }
+.meal-chips span, .badge { background: #e5ede7; color: var(--green); padding: 10px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+.panel { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 16px 50px #2840340c; }
+.login-card { padding: 36px; }
+.login-card h2 { font-size: 32px; margin-bottom: 24px; }
+label { display: block; font-size: 13px; font-weight: 600; margin: 18px 0 8px; }
+input, select { width: 100%; border: 1px solid #dcded5; border-radius: 9px; background: white; color: var(--ink); font: inherit; padding: 12px 13px; outline-color: var(--green); }
+.button { border: 0; border-radius: 9px; padding: 12px 17px; font: inherit; font-weight: 600; cursor: pointer; }
+.primary { background: var(--green); color: white; }
+.primary:hover { background: #254d3d; }
+.login-card .button { width: 100%; margin-top: 24px; }
+.secondary { border: 1px solid var(--line); color: var(--ink); background: transparent; }
+.hint { font-size: 12px; line-height: 1.6; margin: 15px 0 0; }
+.app-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: 46px 0 36px; }
+.app-heading h1 { font-size: 42px; margin-bottom: 8px; }
+.subhead { margin-bottom: 0; }
+.account { display: flex; align-items: center; gap: 14px; font-size: 13px; font-weight: 600; }
+.section-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin: 8px 0 20px; }
+.section-heading h2 { font-size: 27px; margin-bottom: 6px; }
+.section-heading p { margin: 0; font-size: 14px; }
+.live { background: #e3eee7; }
+.price-note { background: #f1f4ed; border-radius: 10px; padding: 14px 16px; color: #52675c; font-size: 13px; }
+.weekly-total { font-weight: 700; margin: 16px 0; }
+.days-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.day-card { background: var(--paper); border: 1px solid var(--line); border-radius: 15px; overflow: hidden; }
+.day-head { padding: 18px 20px 12px; display: flex; justify-content: space-between; gap: 14px; align-items: baseline; }
+.day-head h3 { margin: 0; font: 700 18px Georgia, serif; }
+.day-date { color: var(--muted); font-size: 12px; }
+.menu { padding: 0 20px 10px; color: #63736a; font-size: 12px; line-height: 1.7; }
+.menu strong { color: var(--ink); }
+.meal-fields { padding: 0 20px 16px; display: grid; gap: 10px; }
+.meal-field label { display: flex; justify-content: space-between; gap: 10px; margin: 0 0 5px; font-size: 12px; }
+.meal-field label span { color: var(--muted); font-weight: 400; }
+.day-cost { padding: 0 20px 17px; margin: 0; color: var(--green); font-size: 13px; font-weight: 700; }
+.save-row { position: sticky; bottom: 0; display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 14px 18px; margin: 20px 0 28px; background: #fffefaed; border: 1px solid var(--line); border-radius: 12px; backdrop-filter: blur(10px); }
+.save-row .message { margin: 0; }
+.meal-counts { display: grid; gap: 8px; padding: 0 20px 18px; font-size: 13px; color: #52675c; }
+.message { min-height: 20px; color: #a24236; font-size: 13px; margin: 10px 0 0; }
+footer { display: flex; justify-content: space-between; padding: 30px 0; margin-top: 38px; border-top: 1px solid #dfdfd6; color: var(--muted); font-size: 12px; }
+[hidden] { display: none !important; }
+
+@media (max-width: 760px) {
+  .page { width: min(100% - 28px, 560px); }
+  .top-note { display: none; }
+  .login-layout { grid-template-columns: 1fr; gap: 18px; padding: 30px 0; }
+  .welcome { padding: 10px 0; }
+  .welcome h1 { font-size: 46px; }
+  .login-card { padding: 26px; }
+  .app-heading { padding-top: 32px; flex-direction: column; }
+  .app-heading h1 { font-size: 34px; }
+  .section-heading { align-items: flex-start; flex-direction: column; }
+  .days-list { grid-template-columns: 1fr; }
+  .save-row, footer { align-items: flex-start; flex-direction: column; }
+}
