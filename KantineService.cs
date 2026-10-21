@@ -31,6 +31,10 @@ public sealed record Valgdag(string Dato, int MorgenmadValg, int FrokostValg, in
 public sealed class KantineService(FilService filer)
 {
     public static readonly Maaltidspriser Priser = new(25, 50, 60);
+    public const string DemoPatientBrugernavn = "demo";
+    public const string DemoPatientAdgangskode = "1234";
+    public const string DemoKantineBrugernavn = "kantine";
+    public const string DemoKantineAdgangskode = "KantineDemo2026!";
     private readonly object _writeGate = new();
 
     private static readonly Menudag[] Menu =
@@ -92,6 +96,33 @@ public sealed class KantineService(FilService filer)
             filer.GemBrugere(brugere);
             return patientId ?? brugernavn;
         }
+    }
+
+    public void SikreDemoKonti()
+    {
+        lock (_writeGate)
+        {
+            SikreDemoKonto(DemoPatientBrugernavn, DemoPatientAdgangskode, "patient");
+            SikreDemoKonto(DemoKantineBrugernavn, DemoKantineAdgangskode, "canteen");
+        }
+    }
+
+    private void SikreDemoKonto(string brugernavn, string adgangskode, string rolle)
+    {
+        var eksisterende = filer.IndlaesBrugere().FirstOrDefault(user =>
+            string.Equals(user.Brugernavn, brugernavn, StringComparison.OrdinalIgnoreCase));
+        if (eksisterende is not null)
+        {
+            if (eksisterende.Rolle != rolle)
+            {
+                throw new InvalidOperationException(
+                    $"Demokontoen '{brugernavn}' har den forkerte rolle i brugerdataene.");
+            }
+
+            return;
+        }
+
+        OpretBruger(brugernavn, adgangskode, rolle);
     }
 
     public IReadOnlyList<Patientdag> HentValg(string patientId, DateOnly dato)

@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: hospitalskantine
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: KANTINE_DATA_DIR
+        value: /tmp/hospitalskantine-demo
+      - key: KANTINE_DEMO_MODE
+        value: "true"

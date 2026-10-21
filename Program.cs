@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Hospitalskantine;
 
 var dataDirectory = Environment.GetEnvironmentVariable("KANTINE_DATA_DIR");
@@ -47,8 +48,23 @@ if (args.Length > 0 && args[0] == "--create-user")
 }
 
 var builder = WebApplication.CreateBuilder(args);
+if (string.Equals(
+        Environment.GetEnvironmentVariable("KANTINE_DEMO_MODE"),
+        "true",
+        StringComparison.OrdinalIgnoreCase))
+{
+    canteen.SikreDemoKonti();
+}
+
 builder.Services.AddSingleton(files);
 builder.Services.AddSingleton(canteen);
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardLimit = 1;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -56,7 +72,9 @@ builder.Services
         options.Cookie.Name = "Hospitalskantine.Session";
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.Strict;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.SecurePolicy = builder.Environment.IsProduction()
+            ? CookieSecurePolicy.Always
+            : CookieSecurePolicy.SameAsRequest;
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
         options.Events.OnRedirectToLogin = context =>
@@ -73,10 +91,13 @@ builder.Services
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+app.UseForwardedHeaders();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
 app.MapGet("/api/session", (ClaimsPrincipal user) =>
 {
