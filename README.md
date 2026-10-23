@@ -52,4 +52,12 @@ Adgangskoden indtastes skjult i terminalen. Patientens adgangskode skal være fi
 - Kantinebrugeren ser antal patienter og pårørende samt beløb pr. måltid. Patienternes måltider indgår ikke i beløbet.
 - Konti og valg gemmes lokalt som JSON-filer under `%LOCALAPPDATA%\Hospitalskantine`. `KANTINE_DATA_DIR` kan sættes for at vælge en anden datamappe.
 
+## Kør tests
+
+Projektet har unit tests for, at patientens måltider koster 0 kr., og at pårørende betaler den korrekte pris pr. måltid:
+
+```powershell
+dotnet test .\tests\Hospitalskantine.Tests\Hospitalskantine.Tests.csproj
+```
+
 `/health` er et offentligt helbredstjek til hostingplatformens statuskontrol. I produktion sendes cookies kun over HTTPS. `KANTINE_DATA_DIR` er konfigureret til midlertidig fillagring på Render Free.
