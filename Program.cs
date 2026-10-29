@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
+using QRCoder;
 using Hospitalskantine;
 
 var dataDirectory = Environment.GetEnvironmentVariable("KANTINE_DATA_DIR");
@@ -214,13 +215,36 @@ app.MapPost("/api/choices", async (HttpContext context, ClaimsPrincipal user, Ka
 
     try
     {
-        service.GemValg(patientId, request.Days, DateOnly.FromDateTime(DateTime.Today));
-        return Results.Json(new { ok = true });
+        var reference = service.GemValg(
+            patientId,
+            request.Days,
+            DateOnly.FromDateTime(DateTime.Today),
+            request.Betalingsmetode);
+        return Results.Json(new { ok = true, reference });
     }
     catch (ArgumentException exception)
     {
         return Results.Json(new { error = exception.Message }, statusCode: 400);
     }
+}).RequireAuthorization(new AuthorizeAttribute { Roles = "patient" });
+
+app.MapGet("/api/choices/qr/{reference}", (
+    ClaimsPrincipal user,
+    KantineService service,
+    string reference) =>
+{
+    var patientId = user.FindFirstValue("patientId");
+    if (patientId is null
+        || !Guid.TryParseExact(reference, "N", out _)
+        || !service.HarBestillingsReference(patientId, reference, DateOnly.FromDateTime(DateTime.Today)))
+    {
+        return Results.NotFound();
+    }
+
+    using var generator = new QRCodeGenerator();
+    using var qrData = generator.CreateQrCode(reference, QRCodeGenerator.ECCLevel.Q);
+    var qrImage = new PngByteQRCode(qrData).GetGraphic(pixelsPerModule: 12);
+    return Results.File(qrImage, "image/png");
 }).RequireAuthorization(new AuthorizeAttribute { Roles = "patient" });
 
 app.MapGet("/api/counts", (KantineService service) =>
@@ -267,4 +291,4 @@ static string ReadPassword(string prompt)
 }
 
 public sealed record LoginRequest(string Brugernavn, string Adgangskode);
-public sealed record ChoicesRequest(List<Valgdag> Days);
+public sealed record ChoicesRequest(List<Valgdag> Days, string? Betalingsmetode);

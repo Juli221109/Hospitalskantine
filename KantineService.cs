@@ -10,6 +10,7 @@ public sealed record LoginBruger(string Brugernavn, string Rolle, string? Patien
 public sealed record Maaltidspriser(int Morgenmad, int Frokost, int Aftensmad);
 public sealed record Maaltidstaelling(int Patienter, int Paarorende);
 public sealed record Maaltidsoptaelling(Maaltidstaelling Morgenmad, Maaltidstaelling Frokost, Maaltidstaelling Aftensmad);
+public sealed record Betalingsmetodetaelling(int MobilePay, int Kort);
 public sealed record Maaltidsbelob(int Morgenmad, int Frokost, int Aftensmad);
 public sealed record Menudag(string Morgenmad, string Frokost, string Aftensmad);
 public sealed record Patientdag(
@@ -19,13 +20,16 @@ public sealed record Patientdag(
     int? AftensmadValg,
     Menudag Menu,
     Maaltidspriser Priser,
-    Maaltidsbelob Belob);
+    Maaltidsbelob Belob,
+    string? BestillingsReference,
+    string? Betalingsmetode);
 public sealed record Kantinedag(
     string Dato,
     Maaltidsoptaelling Maaltider,
     Menudag Menu,
     Maaltidspriser Priser,
-    Maaltidsbelob Belob);
+    Maaltidsbelob Belob,
+    Betalingsmetodetaelling Betalingsmetoder);
 public sealed record Valgdag(string Dato, int MorgenmadValg, int FrokostValg, int AftensmadValg);
 
 public sealed class KantineService(FilService filer)
@@ -127,10 +131,12 @@ public sealed class KantineService(FilService filer)
 
     public IReadOnlyList<Patientdag> HentValg(string patientId, DateOnly dato)
     {
+        var dage = KommendeUge(dato);
+        var reference = SikrBestillingsReference(patientId, dage);
         var eksisterende = filer.IndlaesBestillinger()
             .Where(choice => choice.PatientId == patientId)
             .ToDictionary(choice => choice.Date, StringComparer.Ordinal);
-        return KommendeUge(dato).Select(day =>
+        return dage.Select(day =>
         {
             eksisterende.TryGetValue(day, out var choice);
             var meal = MenuForDato(day);
@@ -145,11 +151,17 @@ public sealed class KantineService(FilService filer)
                 meal,
                 Priser,
                 new Maaltidsbelob(Belob(breakfast, Priser.Morgenmad), Belob(lunch, Priser.Frokost),
-                    Belob(dinner, Priser.Aftensmad)));
+                    Belob(dinner, Priser.Aftensmad)),
+                reference,
+                choice?.Betalingsmetode);
         }).ToArray();
     }
 
-    public void GemValg(string patientId, IReadOnlyList<Valgdag> valg, DateOnly dato)
+    public string GemValg(
+        string patientId,
+        IReadOnlyList<Valgdag> valg,
+        DateOnly dato,
+        string? betalingsmetode)
     {
         var dage = KommendeUge(dato);
         if (valg.Count != dage.Count || valg.Select(day => day.Dato).Distinct(StringComparer.Ordinal).Count() != dage.Count ||
@@ -161,14 +173,41 @@ public sealed class KantineService(FilService filer)
             throw new ArgumentException("Vælg en mulighed for hvert måltid på alle syv dage.");
         }
 
+        var harBetalendePaarorende = valg.Any(day =>
+            day.MorgenmadValg == 2 || day.FrokostValg == 2 || day.AftensmadValg == 2);
+        if (harBetalendePaarorende && betalingsmetode is not ("MobilePay" or "Kort"))
+        {
+            throw new ArgumentException("Vælg MobilePay eller kort som betalingsmetode.");
+        }
+
+        if (!harBetalendePaarorende)
+        {
+            betalingsmetode = null;
+        }
+
         lock (_writeGate)
         {
             var bestillinger = filer.IndlaesBestillinger();
+            var reference = Guid.NewGuid().ToString("N").ToUpperInvariant();
             bestillinger.RemoveAll(choice => choice.PatientId == patientId && dage.Contains(choice.Date, StringComparer.Ordinal));
             bestillinger.AddRange(valg.Select(day =>
-                new Bestilling(patientId, day.Dato, day.MorgenmadValg, day.FrokostValg, day.AftensmadValg)));
+                new Bestilling(patientId, day.Dato, day.MorgenmadValg, day.FrokostValg, day.AftensmadValg,
+                    reference, betalingsmetode)));
             filer.GemBestillinger(bestillinger);
+            return reference;
         }
+    }
+
+    public bool HarBestillingsReference(string patientId, string reference, DateOnly dato)
+    {
+        var dage = KommendeUge(dato);
+        var bestillinger = filer.IndlaesBestillinger()
+            .Where(choice => choice.PatientId == patientId && dage.Contains(choice.Date, StringComparer.Ordinal))
+            .ToArray();
+
+        return bestillinger.Length > 0
+            && bestillinger.All(choice => string.Equals(
+                choice.BestillingsReference, reference, StringComparison.Ordinal));
     }
 
     public IReadOnlyList<Kantinedag> HentOptaellinger(DateOnly dato)
@@ -186,11 +225,56 @@ public sealed class KantineService(FilService filer)
                 MenuForDato(day),
                 Priser,
                 new Maaltidsbelob(breakfast.Paarorende * Priser.Morgenmad,
-                    lunch.Paarorende * Priser.Frokost, dinner.Paarorende * Priser.Aftensmad));
+                    lunch.Paarorende * Priser.Frokost, dinner.Paarorende * Priser.Aftensmad),
+                new Betalingsmetodetaelling(
+                    dagens.Count(choice =>
+                        HarPaarorendevalg(choice) && choice.Betalingsmetode == "MobilePay"),
+                    dagens.Count(choice =>
+                        HarPaarorendevalg(choice) && choice.Betalingsmetode == "Kort")));
         }).ToArray();
     }
 
     public static bool GyldigtValg(int valg) => valg is >= 0 and <= 2;
+
+    private string? SikrBestillingsReference(string patientId, IReadOnlyList<string> dage)
+    {
+        lock (_writeGate)
+        {
+            var bestillinger = filer.IndlaesBestillinger();
+            var indices = Enumerable.Range(0, bestillinger.Count)
+                .Where(index => bestillinger[index].PatientId == patientId
+                    && dage.Contains(bestillinger[index].Date, StringComparer.Ordinal))
+                .ToArray();
+
+            if (indices.Length == 0)
+            {
+                return null;
+            }
+
+            var references = indices
+                .Select(index => bestillinger[index].BestillingsReference)
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+            if (references.Length == 1 && !string.IsNullOrWhiteSpace(references[0]))
+            {
+                return references[0];
+            }
+
+            var reference = Guid.NewGuid().ToString("N").ToUpperInvariant();
+            foreach (var index in indices)
+            {
+                bestillinger[index] = bestillinger[index] with { BestillingsReference = reference };
+            }
+
+            filer.GemBestillinger(bestillinger);
+            return reference;
+        }
+    }
+
+    private static bool HarPaarorendevalg(Bestilling bestilling) =>
+        bestilling.BreakfastChoice == 2
+        || bestilling.LunchChoice == 2
+        || bestilling.DinnerChoice == 2;
 
     private static Maaltidstaelling Tael(IEnumerable<int?> valg)
     {

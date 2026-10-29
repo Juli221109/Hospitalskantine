@@ -47,6 +47,11 @@ input, select { width: 100%; border: 1px solid #dcded5; border-radius: 9px; back
 .live { background: #e3eee7; }
 .price-note { background: #f1f4ed; border-radius: 10px; padding: 14px 16px; color: #52675c; font-size: 13px; }
 .weekly-total { font-weight: 700; margin: 16px 0; }
+.payment-method { display: grid; gap: 8px; max-width: 420px; margin: 16px 0; }
+.payment-method label { font-size: 13px; font-weight: 700; }
+.payment-method select { width: 100%; }
+.payment-disclaimer, .payment-summary { color: #52675c; font-size: 13px; }
+.payment-disclaimer { margin: 0; }
 .days-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .day-card { background: var(--paper); border: 1px solid var(--line); border-radius: 15px; overflow: hidden; }
 .day-head { padding: 18px 20px 12px; display: flex; justify-content: space-between; gap: 14px; align-items: baseline; }
@@ -60,6 +65,11 @@ input, select { width: 100%; border: 1px solid #dcded5; border-radius: 9px; back
 .day-cost { padding: 0 20px 17px; margin: 0; color: var(--green); font-size: 13px; font-weight: 700; }
 .save-row { position: sticky; bottom: 0; display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 14px 18px; margin: 20px 0 28px; background: #fffefaed; border: 1px solid var(--line); border-radius: 12px; backdrop-filter: blur(10px); }
 .save-row .message { margin: 0; }
+.booking-qr { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin: 20px 0 28px; }
+.booking-qr h2 { font-size: 22px; }
+.booking-qr p { max-width: 540px; }
+.booking-qr img { flex: 0 0 auto; width: 180px; height: 180px; padding: 8px; border: 1px solid var(--line); border-radius: 10px; background: white; }
+.booking-reference { font-weight: 700; }
 .meal-counts { display: grid; gap: 8px; padding: 0 20px 18px; font-size: 13px; color: #52675c; }
 .message { min-height: 20px; color: #a24236; font-size: 13px; margin: 10px 0 0; }
 footer { display: flex; justify-content: space-between; padding: 30px 0; margin-top: 38px; border-top: 1px solid #dfdfd6; color: var(--muted); font-size: 12px; }
@@ -77,4 +87,5 @@ footer { display: flex; justify-content: space-between; padding: 30px 0; margin-
   .section-heading { align-items: flex-start; flex-direction: column; }
   .days-list { grid-template-columns: 1fr; }
   .save-row, footer { align-items: flex-start; flex-direction: column; }
+  .booking-qr { align-items: flex-start; flex-direction: column; }
 }

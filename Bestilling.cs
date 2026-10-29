@@ -5,4 +5,6 @@ public sealed record Bestilling(
     string Date,
     int? BreakfastChoice,
     int? LunchChoice,
-    int? DinnerChoice);
+    int? DinnerChoice,
+    string? BestillingsReference = null,
+    string? Betalingsmetode = null);

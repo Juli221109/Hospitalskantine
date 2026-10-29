@@ -5,6 +5,8 @@ const canteenPanel = document.querySelector("#canteen-panel");
 const daysList = document.querySelector("#days-list");
 const countsList = document.querySelector("#counts-list");
 const weeklyTotal = document.querySelector("#weekly-total");
+const paymentMethodSection = document.querySelector("#payment-method-section");
+const paymentMethodSelect = document.querySelector("#payment-method");
 let currentUser = null;
 
 async function api(path, options = {}) {
@@ -26,6 +28,7 @@ function setMessage(element, message = "") {
 
 function showLogin() {
   currentUser = null;
+  hideBookingQr();
   appPanel.hidden = true;
   loginPanel.hidden = false;
   document.querySelector("#username").focus();
@@ -127,20 +130,57 @@ function updateDayCost(card) {
 }
 
 function updatePrices() {
-  const total = [...daysList.querySelectorAll(".day-card")]
+  const cards = [...daysList.querySelectorAll(".day-card")];
+  const total = cards
     .reduce((sum, card) => sum + updateDayCost(card), 0);
   weeklyTotal.textContent = `Pårørendes betaling for ugen: ${total} kr`;
+
+  const hasPayingRelative = cards.some((card) =>
+    [...card.querySelectorAll("select")].some((select) => select.value === "2"));
+  paymentMethodSection.hidden = !hasPayingRelative;
+  paymentMethodSelect.required = hasPayingRelative;
+  if (!hasPayingRelative) {
+    paymentMethodSelect.value = "";
+  }
 }
 
 async function loadChoices() {
   try {
     const { days } = await api("/api/choices");
     daysList.replaceChildren(...days.map(createDayCard));
+    paymentMethodSelect.value = days.find((day) => day.betalingsmetode)?.betalingsmetode ?? "";
     updatePrices();
+    showBookingQr(days.find((day) => day.bestillingsReference)?.bestillingsReference ?? null);
   } catch (error) {
     setMessage(document.querySelector("#choices-message"), error.message);
   }
 }
+
+function showBookingQr(reference) {
+  const panel = document.querySelector("#booking-qr-panel");
+  const image = document.querySelector("#booking-qr-image");
+  if (!reference) {
+    hideBookingQr();
+    return;
+  }
+
+  document.querySelector("#booking-reference").textContent = `Bestillingsreference: ${reference}`;
+  setMessage(document.querySelector("#booking-qr-message"));
+  image.alt = `QR-kode for bestillingsreference ${reference}`;
+  image.src = `/api/choices/qr/${encodeURIComponent(reference)}`;
+  panel.hidden = false;
+}
+
+function hideBookingQr() {
+  const panel = document.querySelector("#booking-qr-panel");
+  if (!panel) return;
+  panel.hidden = true;
+  document.querySelector("#booking-qr-image").removeAttribute("src");
+}
+
+document.querySelector("#booking-qr-image").addEventListener("error", () => {
+  setMessage(document.querySelector("#booking-qr-message"), "QR-koden kunne ikke indlæses. Gem dine valg igen, eller log ind på ny.");
+});
 
 function createCountCard(day) {
   const card = document.createElement("article");
@@ -166,6 +206,11 @@ function createCountCard(day) {
     row.textContent = `${label}: ${tally.patienter} patienter gratis + ${tally.paarorende} pårørende × ${price} kr = ${day.belob[meal]} kr`;
     counts.append(row);
   }
+  const paymentMethods = day.betalingsmetoder;
+  const paymentSummary = document.createElement("span");
+  paymentSummary.className = "payment-summary";
+  paymentSummary.textContent = `Pårørendes valgte metode: MobilePay ${paymentMethods.mobilePay} · Kort ${paymentMethods.kort}`;
+  counts.append(paymentSummary);
   card.append(head, menu, counts);
   return card;
 }
@@ -216,8 +261,18 @@ document.querySelector("#choices-form").addEventListener("submit", async (event)
         aftensmadValg: get("aftensmad"),
       };
     });
-    await api("/api/choices", { method: "POST", body: JSON.stringify({ days }) });
-    setMessage(message, "Dine valg er gemt.");
+    const { reference } = await api("/api/choices", {
+      method: "POST",
+      body: JSON.stringify({
+        days,
+        betalingsmetode: paymentMethodSelect.value || null,
+      }),
+    });
+    showBookingQr(reference);
+    const paymentText = paymentMethodSelect.value
+      ? ` Betalingsmetode ${paymentMethodSelect.value} er registreret; ingen betaling er gennemført.`
+      : "";
+    setMessage(message, `Dine valg er gemt.${paymentText}`);
   } catch (error) {
     setMessage(message, error.message);
   } finally {
